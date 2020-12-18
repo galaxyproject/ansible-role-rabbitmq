@@ -9,7 +9,7 @@
 
 - name: install erlang
   apt:
-    name: erlang
+    name: "{{ erlang_package_name }}"
 
 - name: import rabbitmq rpm key
   apt_key:
