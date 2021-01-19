@@ -26,4 +26,4 @@ rabbitmq_vhosts: []
 
 rabbitmq_vhosts_absent: []
 
-erlang_package_name: erlang-base
+erlang_package_name: esl-erlang
