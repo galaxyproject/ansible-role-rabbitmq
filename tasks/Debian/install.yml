@@ -9,7 +9,7 @@
 
 - name: install erlang
   apt:
-    name: erlang
+    name: erlang-nox
 
 - name: import rabbitmq rpm key
   apt_key:

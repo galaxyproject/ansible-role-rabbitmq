@@ -13,7 +13,7 @@
 
 - name: install erlang
   yum:
-    name: erlang
+    name: erlang-nox
 
 - name: add convirt dependencies repository
   yum_repository:
