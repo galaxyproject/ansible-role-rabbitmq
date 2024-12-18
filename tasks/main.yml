@@ -1,4 +1,29 @@
 ---
-- include: rabbitmq.yml
-  tags:
-  - rabbitmq
+
+- name: Include RabbitMQ installation tasks
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family | lower }}.yml"
+
+- name: Import RabbitMQ configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+
+# Prevents double restarts
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure RabbitMQ is started and running
+  ansible.builtin.service:
+    name: "{{ rabbitmq_service_name }}"
+    enabled: true
+    state: started
+
+- name: Include RabbitMQ plugins tasks
+  ansible.builtin.include_tasks: plugins.yml
+  when: rabbitmq_plugins is defined
+
+- name: Include RabbitMQ vhosts tasks
+  ansible.builtin.include_tasks: vhosts.yml
+  when: rabbitmq_vhosts is defined
+
+- name: Include RabbitMQ users tasks
+  ansible.builtin.include_tasks: users.yml
+  when: rabbitmq_users is defined

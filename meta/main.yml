@@ -1,24 +1,26 @@
 ---
-galaxy_info:
-  role_name: rabbitmq
-  author: jasonroyle
-  description: RabbitMQ
-  license: MIT
-  min_ansible_version: 2.5
-  platforms:
-  - name: EL
-    versions:
-    - 5
-    - 6
-    - 7
-  - name: Ubuntu
-    versions:
-    - trusty
-    - xenial
-  galaxy_tags:
-  - rabbitmq
-  - amqp
-  - plugin
-  - cluster
 
+galaxy_info:
+  namespace: galaxyproject
+  role_name: rabbitmq
+  author: The Galaxy Project
+  company: The Galaxy Project
+  description: "Install and Configure the RabbitMQ messaging broker"
+  license: MIT
+  min_ansible_version: "2.11"
+  platforms:
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+    - name: Ubuntu
+      versions:
+        - "jammy"
+        - "noble"
+    - name: Debian
+      versions:
+        - "bookworm"
+  galaxy_tags:
+    - rabbitmq
+    - amqp
 dependencies: []

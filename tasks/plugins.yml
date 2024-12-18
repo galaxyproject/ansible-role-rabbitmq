@@ -1,21 +1,18 @@
 ---
-- name: install rabbitmq plugins
-  get_url:
-    url: "{{ item.url }}"
-    dest: "{{ rabbitmq_plugin_dir }}"
-  with_items: "{{ rabbitmq_plugins }}"
-  when: item.url is defined
 
-- name: disable rabbitmq plugins
-  rabbitmq_plugin:
-    names: "{{ rabbitmq_plugins_disabled | join(',') }}"
+- name: Disable RabbitMQ plugins
+  community.rabbitmq.rabbitmq_plugin:
+    names: "{{ item.names }}"
     state: disabled
+  loop: "{{ rabbitmq_plugins | default([]) }}"
+  when: item.state is defined and item.state == "disabled"
 
-- name: set enabled rabbitmq plugins
-  set_fact:
-    rabbitmq_plugins_enabled: "{{ rabbitmq_plugins_enabled + [ item.name | default(item) ] }}"
-  with_items: "{{ rabbitmq_plugins }}"
-
-- name: enable rabbitmq plugins
-  rabbitmq_plugin:
-    names: "{{ rabbitmq_plugins_enabled | join(',') }}"
+- name: Enable RabbitMQ plugins
+  community.rabbitmq.rabbitmq_plugin:
+    names: "{{ item.names }}"
+    broker_state: "{{ item.broker_state | default(omit) }}"
+    prefix: "{{ item.prefix | default(omit) }}"
+    new_only: "{{ item.new_only | default(omit) }}"
+    state: enabled
+  loop: "{{ rabbitmq_plugins | default([]) }}"
+  when: item.state is not defined or item.state == "enabled"

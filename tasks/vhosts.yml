@@ -1,14 +1,18 @@
 ---
-- name: remove rabbitmq virtual hosts
-  rabbitmq_vhost:
-    name: "{{ item }}"
-    state: absent
-  with_items: "{{ rabbitmq_vhosts_absent }}"
 
-- name: add rabbitmq virtual hosts
-  rabbitmq_vhost:
-    name: "{{ item.name | default(item) }}"
-    node: "{{ item.node | default('rabbit') }}"
+- name: Remove RabbitMQ vhosts
+  community.rabbitmq.rabbitmq_vhost:
+    node: "{{ rabbitmq_node }}"
+    name: "{{ item.name }}"
+    state: absent
+  loop: "{{ rabbitmq_vhosts | default([]) }}"
+  when: item.state is defined and item.state == "absent"
+
+- name: Create RabbitMQ vhosts
+  community.rabbitmq.rabbitmq_vhost:
+    node: "{{ rabbitmq_node }}"
+    name: "{{ item.name }}"
+    tracing: "{{ item.tracing | default(omit) }}"
     state: present
-    tracing: "{{ item.tracing | default(False) }}"
-  with_items: "{{ rabbitmq_vhosts }}"
+  loop: "{{ rabbitmq_vhosts | default([]) }}"
+  when: item.state is not defined or item.state == "present"

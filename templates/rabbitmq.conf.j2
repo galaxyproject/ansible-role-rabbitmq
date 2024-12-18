@@ -1,0 +1,20 @@
+##
+## This file is maintained by Ansible - CHANGES WILL BE OVERWRITTEN
+##
+{% macro walk_rabbitmq_config(prefixes, item) -%}
+{% if item is mapping %}
+{% for k, v in item.items() %}
+{{ walk_rabbitmq_config(prefixes + [k], v) }}
+{%- endfor %}
+{% elif item is boolean %}
+{{ (prefixes | join('.')) }} = {{ item | ternary('true', 'false') }}
+{% elif item is string or item is number %}
+{{ (prefixes | join('.')) }} = {{ item }}
+{% elif item is sequence %}
+{% for i in item.items %}
+{{ (prefixes | join('.')) }}.{{ loop.index }} = {{ i }}
+{%- endfor %}
+{% endif %}
+{%- endmacro %}
+
+{{ walk_rabbitmq_config([], rabbitmq_config) }}

@@ -1,0 +1,28 @@
+---
+
+- name: Import Erlang/RabbitMQ rpm keys
+  ansible.builtin.rpm_key:
+    key: "{{ item }}"
+  loop: "{{ rabbitmq_rpm_keys }}"
+
+- name: Configure Erlang/RabbitMQ yum repositories
+  ansible.builtin.yum_repository:
+    file: rabbitmq
+    name: "{{ item.name }}"
+    description: "{{ item.description }}"
+    baseurl: "{{ item.baseurl }}"
+    repo_gpgcheck: true
+    enabled: true
+    gpgkey: "{{ item.gpgkey }}"
+    gpgcheck: true
+    sslverify: true
+    sslcacert: "/etc/pki/tls/certs/ca-bundle.crt"
+    metadata_expire: 300
+    # pkg_gpgcheck: true
+    # autorefresh: true
+    # type: rpm-md
+  loop: "{{ rabbitmq_yum_repositories }}"
+
+- name: Install RabbitMQ and dependencies
+  ansible.builtin.dnf:
+    name: "{{ rabbitmq_dnf_packages }}"

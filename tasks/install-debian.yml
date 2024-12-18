@@ -1,0 +1,35 @@
+---
+
+# Two step process to avoid changing permissions on existing directories
+- name: Check for apt keyring directory
+  ansible.builtin.stat:
+    path: "{{ rabbitmq_apt_key_dir }}"
+  register: __rabbitmq_apt_key_dir_stat
+
+- name: Ensure apt keyring directory exists
+  ansible.builtin.file:
+    path: "{{ rabbitmq_apt_key_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: not __rabbitmq_apt_key_dir_stat.stat.exists
+
+- name: Import Erlang/RabbitMQ apt keys
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ rabbitmq_apt_key_dir }}/{{ item.file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ rabbitmq_apt_keys }}"
+
+- name: Configure Erlang/RabbitMQ apt repositories
+  ansible.builtin.apt_repository:
+    filename: rabbitmq
+    repo: "deb [arch={{ rabbitmq_apt_arch }} signed-by={{ item.signed_by }}] {{ item.url }} {{ rabbitmq_apt_dist_rel }} {{ rabbitmq_apt_pool }}"
+  loop: "{{ rabbitmq_apt_repositories }}"
+
+- name: Install RabbitMQ and dependencies
+  ansible.builtin.apt:
+    name: "{{ rabbitmq_apt_packages }}"

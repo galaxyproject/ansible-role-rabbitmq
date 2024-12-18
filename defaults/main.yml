@@ -1,27 +1,151 @@
 ---
-rabbitmq_cluster: False
 
-rabbitmq_cluster_master: "rabbit@{{ hostvars[ansible_play_hosts.0].ansible_hostname }}"
+# Config defaults and template from usegalaxy_eu.rabbitmqserver
+rabbitmq_config:
+  consumer_timeout: 3600000 # one hour in milliseconds
+  listeners:
+    tcp: none
+  ssl_listeners:
+    default: 5671
+  ssl_options:
+    cacertfile: /etc/ssl/certs/fullchain.pem
+    certfile: /etc/ssl/certs/cert.pem
+    keyfile: /etc/ssl/user/privkey-rabbitmq.pem
+    verify: verify_peer
+    fail_if_no_peer_cert: false
+    versions:
+      - tlsv1.3
+      - tlsv1.2
+  management_agent:
+    disable_metrics_collector: false
+  management:
+    disable_stats: false
 
+# If false, the server will be standalone
+rabbitmq_cluster: false
+rabbitmq_cluster_name: cluster1
+# Add here cluster members in the form rabbit@f.q.d.n.
+rabbitmq_cluster_members: []
 rabbitmq_erlang_cookie_file: /var/lib/rabbitmq/.erlang.cookie
 
-rabbitmq_plugin_dir: "/usr/lib/rabbitmq/lib/rabbitmq_server-{{ rabbitmq_version.split('-').0 }}/plugins"
+# Always change passwords, even for existing users
+rabbitmq_force_passwords: false
 
-rabbitmq_plugins:
-- rabbitmq_management
-
-rabbitmq_plugins_disabled: []
-
-rabbitmq_users:
-- user: admin
-  password: admin
-  tags: administrator
-
-rabbitmq_users_absent:
-- guest
-
-rabbitmq_version: 3.6.6-1
-
+# Keys match the respective community.rabbitmq.* module
 rabbitmq_vhosts: []
+rabbitmq_users:
+  - user: guest
+    state: absent
+rabbitmq_plugins:
+  - names: rabbitmq_management
 
-rabbitmq_vhosts_absent: []
+
+# The `node` parameter to rabbitmq_* modules, in testing seems to need to be set for Ubuntu but not EL or else tasks
+# fail with "Could not determine the version of the RabbitMQ server."
+rabbitmq_node: "{{ (ansible_os_family == 'Debian') | ternary('rabbit@' ~ ansible_hostname, omit) }}"
+
+# Service manager (e.g. systemd) service name
+rabbitmq_service_name: rabbitmq-server
+
+# RPM/YUM from https://www.rabbitmq.com/docs/install-rpm
+
+rabbitmq_rpm_keys:
+  ## primary RabbitMQ signing key
+  - https://github.com/rabbitmq/signing-keys/releases/download/3.0/rabbitmq-release-signing-key.asc
+  ## modern Erlang repository
+  - https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-erlang.E495BB49CC4BBE5B.key
+  ## RabbitMQ server repository
+  - https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-server.9F4587F226208342.key
+
+rabbitmq_yum_repositories:
+  - name: modern-erlang
+    description: modern-erlang
+    # Use a set of mirrors maintained by the RabbitMQ core team.
+    # The mirrors have significantly higher bandwidth quotas.
+    baseurl:
+      - https://yum1.rabbitmq.com/erlang/el/$releasever/$basearch
+      - https://yum2.rabbitmq.com/erlang/el/$releasever/$basearch
+    gpgkey: https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-erlang.E495BB49CC4BBE5B.key
+  - name: modern-erlang-noarch
+    description: modern-erlang-noarch
+    # Use a set of mirrors maintained by the RabbitMQ core team.
+    # The mirrors have significantly higher bandwidth quotas.
+    baseurl:
+      - https://yum1.rabbitmq.com/erlang/el/$releasever/noarch
+      - https://yum2.rabbitmq.com/erlang/el/$releasever/noarch
+    gpgkey:
+      - https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-erlang.E495BB49CC4BBE5B.key
+      - https://github.com/rabbitmq/signing-keys/releases/download/3.0/rabbitmq-release-signing-key.asc
+  - name: rabbitmq
+    description: rabbitmq
+    baseurl:
+      - https://yum2.rabbitmq.com/rabbitmq/el/$releasever/$basearch
+      - https://yum1.rabbitmq.com/rabbitmq/el/$releasever/$basearch
+    # Cloudsmith's repository key and RabbitMQ package signing key
+    gpgkey:
+      - https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-server.9F4587F226208342.key
+      - https://github.com/rabbitmq/signing-keys/releases/download/3.0/rabbitmq-release-signing-key.asc
+  - name: rabbitmq-noarch
+    description: rabbitmq-noarch
+    baseurl:
+      - https://yum2.rabbitmq.com/rabbitmq/el/$releasever/noarch
+      - https://yum1.rabbitmq.com/rabbitmq/el/$releasever/noarch
+# Cloudsmith's repository key and RabbitMQ package signing key
+    gpgkey:
+      - https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-server.9F4587F226208342.key
+      - https://github.com/rabbitmq/signing-keys/releases/download/3.0/rabbitmq-release-signing-key.asc
+
+rabbitmq_dnf_packages:
+  - logrotate
+  - erlang
+  - rabbitmq-server
+
+# APT from https://www.rabbitmq.com/docs/install-debian
+rabbitmq_apt_keys:
+  ## Team RabbitMQ's main signing key
+  - url: https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA
+    file: com.rabbitmq.team.asc
+  ## Community mirror of Cloudsmith: modern Erlang repository
+  - url: https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-erlang.E495BB49CC4BBE5B.key
+    file: rabbitmq.E495BB49CC4BBE5B.asc
+  ## Community mirror of Cloudsmith: RabbitMQ repository
+  - url: https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-server.9F4587F226208342.key
+    file: rabbitmq.9F4587F226208342.asc
+
+rabbitmq_apt_key_dir: /etc/apt/keyrings
+
+rabbitmq_apt_arch: "{{ (ansible_architecture == 'x86_64') | ternary('amd64', ansible_architecture) }}"
+rabbitmq_apt_dist: "{{ ansible_distribution | lower }}"
+rabbitmq_apt_dist_rel: "{{ ansible_distribution_release | lower }}"
+rabbitmq_apt_pool: main
+rabbitmq_apt_repositories:
+  ## Provides modern Erlang/OTP releases
+  - url: "https://ppa1.rabbitmq.com/rabbitmq/rabbitmq-erlang/deb/{{ rabbitmq_apt_dist }}"
+    signed_by: "{{ rabbitmq_apt_key_dir }}/rabbitmq.E495BB49CC4BBE5B.asc"
+  - url: "https://ppa2.rabbitmq.com/rabbitmq/rabbitmq-erlang/deb/{{ rabbitmq_apt_dist }}"
+    signed_by: "{{ rabbitmq_apt_key_dir }}/rabbitmq.E495BB49CC4BBE5B.asc"
+  ## Provides RabbitMQ
+  - url: "https://ppa1.rabbitmq.com/rabbitmq/rabbitmq-server/deb/{{ rabbitmq_apt_dist }}"
+    signed_by: "{{ rabbitmq_apt_key_dir }}/rabbitmq.9F4587F226208342.asc"
+  - url: "https://ppa2.rabbitmq.com/rabbitmq/rabbitmq-server/deb/{{ rabbitmq_apt_dist }}"
+    signed_by: "{{ rabbitmq_apt_key_dir }}/rabbitmq.9F4587F226208342.asc"
+
+rabbitmq_apt_packages:
+  - erlang-base
+  - erlang-asn1
+  - erlang-crypto
+  - erlang-eldap
+  - erlang-ftp
+  - erlang-inets
+  - erlang-mnesia
+  - erlang-os-mon
+  - erlang-parsetools
+  - erlang-public-key
+  - erlang-runtime-tools
+  - erlang-snmp
+  - erlang-ssl
+  - erlang-syntax-tools
+  - erlang-tftp
+  - erlang-tools
+  - erlang-xmerl
+  - rabbitmq-server
