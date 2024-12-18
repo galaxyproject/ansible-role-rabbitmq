@@ -1,8 +1,7 @@
 galaxyproject.rabbitmq
 ======================
 
-[![Ansible Role](https://img.shields.io/ansible/role/60839)](https://galaxy.ansible.com/galaxyproject/rabbitmq)
-[![Molecule Tests](https://github.com/galaxyproject/ansible-rabbitmq/actions/workflows/molecule.yml/badge.svg)](https://github.com/galaxyproject/ansible-rabbitmq/actions/workflows/molecule.yml)
+[![Ansible Role](https://img.shields.io/ansible/role/d/galaxyproject/rabbitmq)](https://galaxy.ansible.com/galaxyproject/rabbitmq)
 
 galaxyproject.rabbitmq is an [Ansible][ansible] role for installing [RabbitMQ][rabbitmq] and managing its virtual hosts, users, and plugins.
 
