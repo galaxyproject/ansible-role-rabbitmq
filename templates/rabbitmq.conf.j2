@@ -11,9 +11,9 @@
 {% elif item is string or item is number %}
 {{ (prefixes | join('.')) }} = {{ item }}
 {% elif item is sequence %}
-{% for i in item.items %}
+{% for i in item %}
 {{ (prefixes | join('.')) }}.{{ loop.index }} = {{ i }}
-{%- endfor %}
+{% endfor %}
 {% endif %}
 {%- endmacro %}
 
